@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BrainFun - Menu Utama</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 25px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      font-size: 32px;
+      color: #333;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      margin-bottom: 25px;
+      color: #666;
+    }
+
+    .grid-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .game-button {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      padding: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .game-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .scoreboard {
+      background-color: #f8f8f8;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .scoreboard h2 {
+      margin-bottom: 10px;
+      font-size: 20px;
+      color: #444;
+    }
+
+    .scoreboard ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 15px;
+      color: #555;
+    }
+
+    .logout-btn {
+      background: #ff5252;
+      color: white;
+      padding: 10px 20px;
+      font-size: 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: #e63946;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: bold;
+      color: #f5576c;
+      margin-bottom: 5px;
+    }
+
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 26px;
+      }
+
+      .grid-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">BrainFun</div>
+    <h1>Halo, <span id="userName"></span>!</h1>
+    <p class="subtitle">Pilih permainan untuk mengasah otakmu</p>
+
+    <div class="grid-buttons">
+      <button class="game-button" onclick="startGame('caklontong')">Cak Lontong</button>
+      <button class="game-button" onclick="startGame('family100')">Family 100</button>
+      <button class="game-button" onclick="startGame('lengkapikata')">Lengkapi Kata</button>
+      <button class="game-button" onclick="startGame('siapakahaku')">Siapakah Aku</button>
+      <button class="game-button" onclick="startGame('susunkata')">Susun Kata</button>
+      <button class="game-button" onclick="startGame('tekateki')">Teka-Teki</button>
+      <button class="game-button" onclick="startGame('tebakgambar')">Tebak Gambar</button>
+      <button class="game-button" onclick="startGame('tebakkata')">Tebak Kata</button>
+    </div>
+
+    <div class="scoreboard">
+      <h2>Leaderboard Cak Lontong</h2>
+      <ul id="leaderboard"></ul>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Keluar</button>
+  </div>
+
+  <script>
+    const username = localStorage.getItem('username');
+    if (!username) {
+      window.location.href = 'index.html';
+    }
+    document.getElementById('userName').textContent = username;
+
+    function displayLeaderboard() {
+      const leaderboard = JSON.parse(localStorage.getItem('caklontong_scores') || '{}');
+      const leaderboardList = document.getElementById('leaderboard');
+      leaderboardList.innerHTML = '';
+      const sorted = Object.entries(leaderboard).sort((a, b) => b[1] - a[1]);
+      sorted.forEach(([user, score]) => {
+        const li = document.createElement('li');
+        li.textContent = `${user}: ${score} poin`;
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    displayLeaderboard();
+
+    function startGame(gameName) {
+      window.location.href = `${gameName}.html`;
+    }
+
+    function logout() {
+      localStorage.removeItem('username');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

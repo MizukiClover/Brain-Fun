@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family 100 - Asah Otak</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #f9d976 0%, #f39f86 100%);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .score {
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #ff7676;
+      color: white;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #ff4c4c;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .result {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .answer-list {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Game Family 100</h1>
+    <p class="description">Jawaban ditulis huruf kecil semua dan tanpa spasi. Coba menebak jawaban!</p>
+    <div class="score">Skor: <span id="score">0</span></div>
+    <button id="nextBtn" onclick="getQuestion()">Soal Berikutnya</button>
+    <div class="result" id="result"></div>
+    <div id="answerBox" style="display:none;">
+      <input type="text" id="userAnswer" placeholder="Tulis jawabanmu di sini">
+      <br>
+      <button onclick="checkAnswer()">Kirim Jawaban</button>
+      <button onclick="giveUp()">Nyerah</button>
+    </div>
+    <div class="answer-list" id="answerList"></div>
+    <br>
+    <button onclick="goHome()">Kembali ke Menu Utama</button>
+  </div>
+
+  <script>
+    let currentAnswers = [];
+    let remainingAnswers = [];
+    let score = 0;
+    let isAnswered = true; // supaya bisa load soal pertama langsung
+
+    async function getQuestion() {
+      if (!isAnswered) {
+        alert("Kamu harus menjawab atau menyerah dulu sebelum lanjut ke soal berikutnya.");
+        return;
+      }
+
+      const res = await fetch('https://fastrestapis.fasturl.cloud/game/family100');
+      const data = await res.json();
+      currentAnswers = data.result.answer.map(ans => ans.toLowerCase().replace(/\s+/g, ''));
+      remainingAnswers = [...currentAnswers];
+
+      isAnswered = false;
+
+      document.getElementById('result').innerHTML = `<p><strong>Pertanyaan:</strong> ${data.result.question}</p>`;
+      document.getElementById('answerBox').style.display = 'block';
+      document.getElementById('userAnswer').value = '';
+      document.getElementById('answerList').innerHTML = `
+        <p><strong>Jumlah Jawaban yang Benar:</strong> ${remainingAnswers.length}</p>
+      `;
+    }
+
+    function checkAnswer() {
+      if (isAnswered) return;
+      const userInput = document.getElementById('userAnswer').value.trim().toLowerCase().replace(/\s+/g, '');
+      if (!userInput) {
+        alert('Jawaban tidak boleh kosong!');
+        return;
+      }
+
+      const resultBox = document.getElementById('result');
+      if (remainingAnswers.includes(userInput)) {
+        score += 3;
+        remainingAnswers = remainingAnswers.filter(ans => ans !== userInput);
+        resultBox.innerHTML += `
+          <p style="color:green"><strong>Benar!</strong> +3 poin</p>
+          <p><strong>Jawaban yang benar:</strong> ${userInput}</p>
+        `;
+      } else {
+        resultBox.innerHTML += `
+          <p style="color:red"><strong>Salah!</strong></p>
+        `;
+      }
+      document.getElementById('score').textContent = score;
+
+      // Update list jawaban yang tersisa
+      document.getElementById('answerList').innerHTML = `
+        <p><strong>Jawaban yang Tersisa:</strong> ${remainingAnswers.length}</p>
+      `;
+
+      // Jika semua jawaban benar
+      if (remainingAnswers.length === 0) {
+        isAnswered = true;
+        document.getElementById('answerBox').style.display = 'none';
+        saveScore();
+      }
+    }
+
+    function giveUp() {
+      if (isAnswered) return;
+      score -= 2; // Tidak ada poin untuk menyerah
+      const resultBox = document.getElementById('result');
+      resultBox.innerHTML += `
+        <p style="color:orange"><strong>Kamu menyerah! -2 poin</strong></p>
+        <p><strong>Semua Jawaban:</strong> ${currentAnswers.join(', ')}</p>
+      `;
+      isAnswered = true;
+      document.getElementById('score').textContent = score;
+      document.getElementById('answerBox').style.display = 'none';
+      saveScore();
+    }
+
+    function goHome() {
+      window.location.href = 'menu.html';
+    }
+
+    function saveScore() {
+      const username = localStorage.getItem('username') || 'Guest';
+      let leaderboard = JSON.parse(localStorage.getItem('family100_scores') || '{}');
+      leaderboard[username] = score;
+      localStorage.setItem('family100_scores', JSON.stringify(leaderboard));
+    }
+  </script>
+</body>
+</html>

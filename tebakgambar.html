@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tebak Gambar - Asah Otak</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    p.description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .score {
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Tebak Gambar</h1>
+    <p class="description">Jawaban ditulis huruf kecil semua dan tanpa spasi</p>
+    <div class="score">Skor: <span id="score">0</span></div>
+    <div id="questionBox">
+      <button onclick="getQuestion()">Mulai / Soal Berikutnya</button>
+    </div>
+    <div id="result"></div>
+    <div id="answerBox" style="display:none;">
+      <img id="image" src="" alt="Soal Gambar"/>
+      <br>
+      <input type="text" id="userAnswer" placeholder="Jawabanmu">
+      <br>
+      <button onclick="checkAnswer()">Kirim Jawaban</button>
+      <button onclick="giveClue()">Clue (-2 poin)</button>
+      <button onclick="giveUp()">Nyerah (-3 poin)</button>
+    </div>
+    <br>
+    <button onclick="goHome()">Kembali ke Menu Utama</button>
+  </div>
+
+  <script>
+    let currentAnswer = '';
+    let currentClue = '';
+    let score = 0;
+    let clueUsed = false;
+    let isAnswered = true;
+
+    function getUsername() {
+      return localStorage.getItem('username') || 'Guest';
+    }
+
+    async function getQuestion() {
+      if (!isAnswered) {
+        alert("Jawab dulu soal sebelumnya atau nyerah sebelum lanjut.");
+        return;
+      }
+
+      const res = await fetch('https://fastrestapis.fasturl.cloud/game/tebakgambar');
+      const data = await res.json();
+      currentAnswer = data.result.answer.toLowerCase().replace(/\s+/g, '');
+      currentClue = data.result.description;
+      isAnswered = false;
+      clueUsed = false;
+
+      document.getElementById('image').src = data.result.image;
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('userAnswer').value = '';
+      document.getElementById('answerBox').style.display = 'block';
+    }
+
+    function checkAnswer() {
+      if (isAnswered) return;
+      const userInput = document.getElementById('userAnswer').value.trim().toLowerCase().replace(/\s+/g, '');
+      if (!userInput) {
+        alert('Jawaban tidak boleh kosong!');
+        return;
+      }
+
+      if (userInput === currentAnswer) {
+        score += 6;
+        document.getElementById('result').innerHTML = `<p style="color:green"><strong>Benar!</strong> +6 poin</p>`;
+        isAnswered = true;
+        saveScore();
+      } else {
+        document.getElementById('result').innerHTML = `<p style="color:red"><strong>Salah!</strong> Coba lagi.</p>`;
+      }
+      document.getElementById('score').textContent = score;
+    }
+
+    function giveClue() {
+      if (clueUsed) return;
+      if (!confirm('Gunakan clue? Poin akan dikurangi 2.')) return;
+      clueUsed = true;
+      score -= 2;
+      document.getElementById('result').innerHTML = `<p style="color:orange"><strong>Clue:</strong> ${currentClue} (-2 poin)</p>`;
+      document.getElementById('score').textContent = score;
+      saveScore();
+    }
+
+    function giveUp() {
+      if (isAnswered) return;
+      score -= 3;
+      document.getElementById('result').innerHTML = `
+        <p style="color:orange"><strong>Kamu menyerah! -3 poin</strong></p>
+        <p><strong>Jawaban:</strong> ${currentAnswer}</p>
+        <p><strong>Penjelasan:</strong> ${currentClue}</p>
+      `;
+      isAnswered = true;
+      document.getElementById('score').textContent = score;
+      saveScore();
+    }
+
+    function goHome() {
+      window.location.href = 'menu.html';
+    }
+
+    function saveScore() {
+      const username = getUsername();
+      let leaderboard = JSON.parse(localStorage.getItem('tebakgambar_scores') || '{}');
+      leaderboard[username] = score;
+      localStorage.setItem('tebakgambar_scores', JSON.stringify(leaderboard));
+    }
+  </script>
+</body>
+</html>
